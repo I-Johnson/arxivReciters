@@ -1,8 +1,7 @@
-# Monorepo template
+# ArxivReciter
 
 ## Development
 
-This monorepo uses Turborepo to manage the two packages (web, api).
 To build all packages run `yarn build` from root.
 
 To build a specific package run `yarn build --filter=<PACKAGE_NAME>`

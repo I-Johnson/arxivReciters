@@ -3,6 +3,10 @@ import { PDFDocument} from 'pdf-lib';
 import { Document } from 'langchain/document';
 import { writeFile, unlink  } from 'fs/promises';
 import { UnstructuredLoader } from 'langchain/document_loaders/fs/unstructured';
+import { formatDocumentsAsString } from 'langchain/util/document';
+import { ChatOpenAI } from 'langchain/chat_models/openai';
+import { NOTES_TOOL_SCHEMA, NOTE_PROMPT, outputParser, ArxivPaperNote } from 'prompts.js';
+
 
 async function deletePages(pdf: Buffer, pagesToDelete: number[]): Promise<Buffer> {
     const pdfDoc = await PDFDocument.load(pdf);
@@ -47,6 +51,22 @@ async function convertPdfToDocument(pdf: Buffer): Promise<Array<Document>> {
     return documents;
 }
 
+async function generateNotes(documents: Array<Document>): Promise<Array<ArxivPaperNote>>{
+    const documentsAsString = formatDocumentsAsString(documents);
+    const model = new ChatOpenAI({
+        modelName: 'gpt-4-1106-preview',
+        temperature: 0.0,
+    })
+    const modelWithTool = model.bind({
+        tools: [NOTES_TOOL_SCHEMA], 
+    })
+    const chain = NOTE_PROMPT.pipe(modelWithTool).pipe(outputParser);
+    const response = await chain.invoke({
+        paper: documentsAsString, 
+    });
+    return response;
+}
+
 async function main({
     paperUrl, 
     name, 
@@ -66,8 +86,9 @@ async function main({
     }
     // Convert the pdf to Document objects (langchain's internal representation of documents)
     const documents = await convertPdfToDocument(pdfAsBuffer);
-    console.log(documents);;
-    console.log('length:', documents.length);
+    const notes = await generateNotes(documents);
+    console.log(notes);;
+    console.log('length:', notes.length);
 }
 
 main({paperUrl: 'https://arxiv.org/pdf/2305.15334.pdf', name: 'test'})

@@ -69,7 +69,7 @@ async function generateNotes(documents: Array<Document>): Promise<Array<ArxivPap
 
 async function main({
     paperUrl, 
-    name, 
+    // name, 
     pagesToDelete
 }: {
     paperUrl: string
@@ -87,6 +87,7 @@ async function main({
     // Convert the pdf to Document objects (langchain's internal representation of documents)
     const documents = await convertPdfToDocument(pdfAsBuffer);
     const notes = await generateNotes(documents);
+
     console.log(notes);;
     console.log('length:', notes.length);
 }
